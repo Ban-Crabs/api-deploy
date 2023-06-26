@@ -84,7 +84,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@ModelAttribute @Valid SaveUserDTO data, BindingResult result){
+    public ResponseEntity<?> register(@ModelAttribute @Valid RegisterUserDTO data, BindingResult result){
         try{
             if(result.hasErrors()){
                 return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);

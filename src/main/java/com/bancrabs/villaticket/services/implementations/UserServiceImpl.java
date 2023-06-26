@@ -40,11 +40,11 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Boolean register(SaveUserDTO data) throws Exception {
+    public Boolean register(RegisterUserDTO data) throws Exception {
         try{
             User check = userRepository.findByUsernameOrEmail(data.getUsername(), data.getEmail());
             if(check == null){
-                userRepository.save(new User(data.getUsername(), data.getEmail(), passwordEncoder.encode(data.getPassword())));
+                userRepository.save(new User(data.getUsername(), data.getEmail(), null));
                 return true;
             }
             else{
