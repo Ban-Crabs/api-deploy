@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService{
         try{
             User check = userRepository.findByUsernameOrEmail(data.getUsername(), data.getEmail());
             if(check == null){
-                userRepository.save(new User(data.getUsername(), data.getEmail(), data.getPassword()));
+                userRepository.save(new User(data.getUsername(), data.getEmail(), passwordEncoder.encode(data.getPassword())));
                 return true;
             }
             else{
