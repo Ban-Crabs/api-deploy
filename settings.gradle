@@ -1,2 +1,2 @@
 rootProject.name = 'villaticket'
-gradle.ext.mainClassName = 'com.bancrabs.villaticket.VillaTicketApplication'
+gradle.ext.mainClassName = 'com.bancrabs.villaticket.VillaticketApplication'
