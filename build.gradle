@@ -41,7 +41,7 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-tasks.named('bootJar') {
+jar {
     manifest {
         attributes 'Main-Class': gradle.ext.mainClassName
     }
