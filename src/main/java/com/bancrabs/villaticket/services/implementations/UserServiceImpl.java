@@ -34,9 +34,6 @@ public class UserServiceImpl implements UserService{
     private UserRepository userRepository;
 
     @Autowired
-    private UserPrivilegeService userPrivilegeService;
-
-    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -234,7 +231,6 @@ public class UserServiceImpl implements UserService{
             User user = findUserAuthenticated();
             user.setActive(true);
             userRepository.save(user);
-            userPrivilegeService.save(new SavePrivilegeDTO("user", user.getId()));
             return true;
         }
         catch(Exception e){

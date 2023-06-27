@@ -367,6 +367,8 @@ public class UserController {
     public ResponseEntity<?> activate(@ModelAttribute(name = "code") String code){
         try{
             if(userService.activate(code)){
+                User user = userService.findUserAuthenticated();
+                userPrivilegeService.save(new SavePrivilegeDTO("user", user.getId()));
                 return new ResponseEntity<>("Activated", HttpStatus.OK);
             }
             else{
