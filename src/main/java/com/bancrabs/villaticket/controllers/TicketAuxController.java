@@ -19,13 +19,14 @@ import com.bancrabs.villaticket.models.dtos.save.SaveLocaleDTO;
 import com.bancrabs.villaticket.models.entities.QR;
 import com.bancrabs.villaticket.models.entities.Ticket;
 import com.bancrabs.villaticket.models.entities.Transfer;
+import com.bancrabs.villaticket.models.entities.User;
 import com.bancrabs.villaticket.services.LocaleService;
 import com.bancrabs.villaticket.services.QRService;
 import com.bancrabs.villaticket.services.TicketService;
 import com.bancrabs.villaticket.services.TransferService;
+import com.bancrabs.villaticket.services.UserService;
 
 import jakarta.validation.Valid;
-import net.glxn.qrgen.javase.QRCode;
 
 @RestController
 @RequestMapping("/api/ticketaux")
@@ -45,6 +46,9 @@ public class TicketAuxController {
 
     @Autowired
     private TransferService transferService;
+
+    @Autowired
+    private UserService userService;
 
     @GetMapping("/locale")
     @PreAuthorize("hasAuthority('admin')")
@@ -105,11 +109,35 @@ public class TicketAuxController {
             if(transfer == null){
                 return new ResponseEntity<>("Transfer not found", HttpStatus.NOT_FOUND);
             }
-            QR newQR = qrService.save(QRCode.from(transferId.toString()).toString());
+            QR newQR = qrService.save(passwordEncoder.encode(transferId.toString() + Long.toString(System.currentTimeMillis())));
             if(newQR == null){
                 return new ResponseEntity<>("QR not created", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             return new ResponseEntity<>(new QRResponseDTO(newQR.getCode()), HttpStatus.CREATED);
+        }
+        catch(Exception e){
+            System.out.println(e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/qr/activate")
+    public ResponseEntity<?> activateUser(@ModelAttribute("email") String email){
+        try{
+            User check = userService.findById(email);
+            if(check == null){
+                return new ResponseEntity<>("User not found", HttpStatus.NOT_FOUND);
+            }
+
+            if(check.getActive()){
+                return new ResponseEntity<>("User already active", HttpStatus.BAD_REQUEST);
+            }
+
+            QR newQR = qrService.save(passwordEncoder.encode(email + Long.toString(System.currentTimeMillis())));
+            if(newQR == null){
+                return new ResponseEntity<>("QR not created", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            return new ResponseEntity<>(new QRResponseDTO(newQR.getCode()), HttpStatus.OK);
         }
         catch(Exception e){
             System.out.println(e);

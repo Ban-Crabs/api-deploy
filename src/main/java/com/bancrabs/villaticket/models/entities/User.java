@@ -41,7 +41,7 @@ public class User implements UserDetails {
     private String email;
 
     @Column(name = "active", insertable = false)
-    private Boolean active;
+    private Boolean active = false;
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
     @JsonIgnore

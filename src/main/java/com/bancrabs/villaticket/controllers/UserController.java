@@ -103,6 +103,7 @@ public class UserController {
             }
 
             if(userService.register(data)){
+                
                 return new ResponseEntity<>("Created", HttpStatus.CREATED);
             }
             else{
@@ -344,5 +345,48 @@ public class UserController {
             }
         }
         return new RedirectView("/");
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(){
+        try{
+            if(userService.logoutActive()){
+                return new ResponseEntity<>("Logged out", HttpStatus.OK);
+            }
+            else{
+                return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        catch(Exception e){
+            System.out.println(e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/activate")
+    public ResponseEntity<?> activate(@ModelAttribute(name = "code") String code){
+        try{
+            if(userService.activate(code)){
+                return new ResponseEntity<>("Activated", HttpStatus.OK);
+            }
+            else{
+                return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        catch(Exception e){
+            System.out.println(e);
+            switch(e.getMessage()){
+                case "QR Expired":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.GONE);
+                case "QR not found":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+                case "User not found":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+                case "User already activated":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+                default:
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
     }
 }

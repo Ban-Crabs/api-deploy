@@ -13,11 +13,15 @@ import org.springframework.stereotype.Service;
 
 import com.bancrabs.villaticket.models.dtos.LoginDTO;
 import com.bancrabs.villaticket.models.dtos.save.RegisterUserDTO;
+import com.bancrabs.villaticket.models.dtos.save.SavePrivilegeDTO;
 import com.bancrabs.villaticket.models.dtos.save.SaveUserDTO;
+import com.bancrabs.villaticket.models.entities.QR;
 import com.bancrabs.villaticket.models.entities.Token;
 import com.bancrabs.villaticket.models.entities.User;
 import com.bancrabs.villaticket.repositories.TokenRepository;
 import com.bancrabs.villaticket.repositories.UserRepository;
+import com.bancrabs.villaticket.services.QRService;
+import com.bancrabs.villaticket.services.UserPrivilegeService;
 import com.bancrabs.villaticket.services.UserService;
 import com.bancrabs.villaticket.utils.JWTTools;
 
@@ -30,6 +34,9 @@ public class UserServiceImpl implements UserService{
     private UserRepository userRepository;
 
     @Autowired
+    private UserPrivilegeService userPrivilegeService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -37,6 +44,9 @@ public class UserServiceImpl implements UserService{
 
     @Autowired
     private JWTTools jwtTools;
+
+    @Autowired
+    private QRService qrService;
 
     @Override
     @Transactional(rollbackOn = Exception.class)
@@ -195,6 +205,40 @@ public class UserServiceImpl implements UserService{
             return true;
         } catch (Exception e) {
             throw e;   
+        }
+    }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public Boolean logoutActive() throws Exception {
+        try {
+            User toLogout = findUserAuthenticated();
+            if(toLogout == null) throw new Exception("User not found");
+            List<Token> tokens = tokenRepository.findByUserAndActive(toLogout, true);
+            tokens.forEach(token -> {
+                token.setActive(false);
+                tokenRepository.save(token);
+        });
+        return true;
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    @Override
+    public Boolean activate(String code) throws Exception {
+        try{
+            QR check = qrService.findByCode(code);
+            if(check == null) throw new Exception("QR not found");
+            if(System.currentTimeMillis() - check.getCreationTime().getTime() > 86400000 || System.currentTimeMillis() - check.getCreationTime().getTime() <= 0 ) throw new Exception("QR expired");
+            User user = findUserAuthenticated();
+            user.setActive(true);
+            userRepository.save(user);
+            userPrivilegeService.save(new SavePrivilegeDTO("user", user.getId()));
+            return true;
+        }
+        catch(Exception e){
+            throw e;
         }
     }
 }
