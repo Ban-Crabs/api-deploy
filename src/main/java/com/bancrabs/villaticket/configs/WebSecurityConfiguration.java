@@ -47,7 +47,7 @@ public class WebSecurityConfiguration {
                 .anyRequest().authenticated()).oauth2Login(oauth -> 
 				oauth.loginPage("/api/user/login/oauth2/code/google")
 						.tokenEndpoint().accessTokenResponseClient(accessTokenResponseClient())
-						.and().defaultSuccessUrl("/")
+						.and().defaultSuccessUrl("/api/user/loginSuccess")
 						.failureUrl("/loginFailure"));
 
 		// Statelessness

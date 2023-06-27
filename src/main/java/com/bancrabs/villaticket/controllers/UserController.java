@@ -2,13 +2,21 @@ package com.bancrabs.villaticket.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +26,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.view.RedirectView;
 
 import com.bancrabs.villaticket.models.dtos.LoginDTO;
 import com.bancrabs.villaticket.models.dtos.response.PageResponseDTO;
@@ -33,7 +43,6 @@ import com.bancrabs.villaticket.models.entities.User;
 import com.bancrabs.villaticket.services.AttendanceService;
 import com.bancrabs.villaticket.services.UserPrivilegeService;
 import com.bancrabs.villaticket.services.UserService;
-
 import jakarta.validation.Valid;
 
 @RestController
@@ -48,6 +57,9 @@ public class UserController {
 
     @Autowired
     private AttendanceService attendanceService;
+
+    @Autowired
+    private OAuth2AuthorizedClientService authorizedClientService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@ModelAttribute @Valid LoginDTO data, BindingResult result) {
@@ -303,5 +315,34 @@ public class UserController {
             System.out.println(e);
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @GetMapping("/loginSuccess")
+    public RedirectView getLoginInfo(Model model, OAuth2AuthenticationToken authentication){
+        OAuth2AuthorizedClient client = authorizedClientService
+            .loadAuthorizedClient(authentication.getAuthorizedClientRegistrationId(), authentication.getName());
+
+        String userInfoEndpointUri = client.getClientRegistration()
+            .getProviderDetails().getUserInfoEndpoint().getUri();
+
+        if(!userInfoEndpointUri.isEmpty()){
+            RestTemplate restTemplate = new RestTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + client.getAccessToken()
+            .getTokenValue());
+            HttpEntity<String> entity = new HttpEntity<>("", headers);
+            ResponseEntity <Map>response = restTemplate
+            .exchange(userInfoEndpointUri, HttpMethod.GET, entity, Map.class);
+            Map userAttributes = response.getBody();
+            String name = (String) userAttributes.get("name");
+            String email = (String) userAttributes.get("email");
+            try{
+                userService.register(new RegisterUserDTO(name, email));
+            }
+            catch(Exception e){
+                System.out.println(e.getMessage());
+            }
+        }
+        return new RedirectView("/");
     }
 }
