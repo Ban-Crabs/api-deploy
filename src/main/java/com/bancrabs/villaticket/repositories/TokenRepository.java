@@ -10,5 +10,5 @@ import com.bancrabs.villaticket.models.entities.User;
 public interface TokenRepository extends JpaRepository<Token, UUID>{ 
 	
 	List<Token> findByUserAndActive(User user, Boolean active);
-
+	List<Token> findByActiveIsFalse();
 }

@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import com.bancrabs.villaticket.models.dtos.LoginDTO;
 import com.bancrabs.villaticket.models.dtos.save.RegisterUserDTO;
-import com.bancrabs.villaticket.models.dtos.save.SavePrivilegeDTO;
 import com.bancrabs.villaticket.models.dtos.save.SaveUserDTO;
 import com.bancrabs.villaticket.models.entities.QR;
 import com.bancrabs.villaticket.models.entities.Token;
@@ -21,7 +20,6 @@ import com.bancrabs.villaticket.models.entities.User;
 import com.bancrabs.villaticket.repositories.TokenRepository;
 import com.bancrabs.villaticket.repositories.UserRepository;
 import com.bancrabs.villaticket.services.QRService;
-import com.bancrabs.villaticket.services.UserPrivilegeService;
 import com.bancrabs.villaticket.services.UserService;
 import com.bancrabs.villaticket.utils.JWTTools;
 
