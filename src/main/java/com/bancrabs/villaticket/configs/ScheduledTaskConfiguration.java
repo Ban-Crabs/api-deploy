@@ -14,8 +14,9 @@ public class ScheduledTaskConfiguration {
     @Autowired
     private TokenService tokenService;
 
-    @Scheduled(cron = "0 0 3 1 * ?")
+    @Scheduled(cron = "0 0 3 * * ?")
     public void clearToken() {
+        System.out.println("Cleaning inactive tokens");
         tokenService.cleanInactiveTokens();
     }
 
