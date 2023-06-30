@@ -235,4 +235,16 @@ public class UserServiceImpl implements UserService{
             throw e;
         }
     }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public Boolean update(User user) throws Exception {
+        try{
+            userRepository.save(user);
+            return true;
+        }
+        catch(Exception e){
+            throw e;
+        }
+    }
 }

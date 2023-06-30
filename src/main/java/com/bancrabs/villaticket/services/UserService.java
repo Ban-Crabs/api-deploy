@@ -15,6 +15,7 @@ public interface UserService {
     Boolean login(LoginDTO data) throws Exception;
     Boolean logoutActive() throws Exception;
     Boolean update(SaveUserDTO data, String id) throws Exception;
+    Boolean update(User user) throws Exception;
     Boolean deleteById(String id) throws Exception;
     User findById(UUID id);
     User findById(String id);
