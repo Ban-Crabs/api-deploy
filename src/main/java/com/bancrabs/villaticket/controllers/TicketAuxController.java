@@ -30,6 +30,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/ticketaux")
+@CrossOrigin("*")
 public class TicketAuxController {
     
     @Autowired

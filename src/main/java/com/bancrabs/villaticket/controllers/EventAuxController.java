@@ -23,6 +23,7 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/eventaux")
+@CrossOrigin("*")
 public class EventAuxController {
     
     @Autowired

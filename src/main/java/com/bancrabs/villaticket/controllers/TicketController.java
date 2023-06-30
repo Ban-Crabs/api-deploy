@@ -48,6 +48,7 @@ import jakarta.validation.constraints.NotEmpty;
 
 @RestController
 @RequestMapping("/api/ticket")
+@CrossOrigin("*")
 public class TicketController {
     
     @Autowired
