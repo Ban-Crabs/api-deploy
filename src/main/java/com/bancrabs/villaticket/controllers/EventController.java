@@ -254,4 +254,32 @@ public class EventController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/upcoming")
+    @PreAuthorize("hasAuthority('user')")
+    public ResponseEntity<?> getUpcomingEvents(@RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "amt", defaultValue = "10") int size){
+        try{
+            Page<Event> rawEvents = eventService.findAllUpcomingEvents(page, size);
+            PageResponseDTO<Event> response = new PageResponseDTO<>(rawEvents.getContent(), rawEvents.getTotalPages(), rawEvents.getTotalElements());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        catch(Exception e){
+            System.out.println(e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/finished")
+    @PreAuthorize("hasAuthority('user')")
+    public ResponseEntity<?> getFinishedEvents(@RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "amt", defaultValue = "10") int size){
+        try{
+            Page<Event> rawEvents = eventService.findAllPastEvents(page, size);
+            PageResponseDTO<Event> response = new PageResponseDTO<>(rawEvents.getContent(), rawEvents.getTotalPages(), rawEvents.getTotalElements());
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+        catch(Exception e){
+            System.out.println(e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

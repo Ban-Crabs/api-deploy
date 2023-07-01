@@ -109,13 +109,13 @@ public class EventServiceImpl implements EventService {
     @Override
     public Page<Event> findAllUpcomingEvents(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return eventRepository.findByEndTimeIsNull(pageable);
+        return eventRepository.findByStatus("upcoming", pageable);
     }
 
     @Override
     public Page<Event> findAllPastEvents(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return eventRepository.findByEndTimeIsNotNull(pageable);
+        return eventRepository.findByStatus("finished", pageable);
     }
 
     @Override
