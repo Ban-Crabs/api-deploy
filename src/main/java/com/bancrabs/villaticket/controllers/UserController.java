@@ -237,7 +237,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}/privilege")
-    @PreAuthorize("hasAuthority('admin')")
+    @PreAuthorize("hasAuthority('user')")
     public ResponseEntity<?> getPrivileges(@PathVariable("id") String id){
         try{
             return new ResponseEntity<>(userPrivilegeService.findByUserId(id), HttpStatus.OK);
@@ -391,6 +391,23 @@ public class UserController {
                 default:
                     return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        }
+    }
+
+    @GetMapping("/whoami")
+    public ResponseEntity<?> whoami(){
+        try{
+            User user = userService.findUserAuthenticated();
+            if(user != null){
+                return new ResponseEntity<>(new UserResponseDTO(user.getUsername(), user.getEmail()), HttpStatus.OK);
+            }
+            else{
+                return new ResponseEntity<>("Not found", HttpStatus.NOT_FOUND);
+            }
+        }
+        catch(Exception e){
+            System.out.println(e);
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

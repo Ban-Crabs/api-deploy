@@ -78,6 +78,10 @@ public class UserPrivilegeServiceImpl implements UserPrivilegeService{
         if(user == null){
             return null;
         }
+        User check = userService.findUserAuthenticated();
+        if(check != null && !check.getId().equals(user.getId())){
+            return null;
+        }
         List<UserPrivilege> privileges = userPrivilegeRepository.findByUserId(user.getId());
         if(privileges != null){
             List<UserPrivilegeResponseDTO> response = new ArrayList<>();
