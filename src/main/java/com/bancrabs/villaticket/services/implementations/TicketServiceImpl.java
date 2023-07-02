@@ -84,11 +84,6 @@ public class TicketServiceImpl implements TicketService{
     }
 
     @Override
-    public Ticket findByUserId(UUID userId) {
-        return ticketRepository.findByUserId(userId);
-    }
-
-    @Override
     public Boolean save(Ticket ticket) {
         try{
             ticketRepository.save(ticket);
@@ -137,6 +132,15 @@ public class TicketServiceImpl implements TicketService{
         catch(Exception e){
             throw e;
         }
+    }
+
+    @Override
+    public Page<Ticket> findByUser(String userId, int page, int size) {
+        User relatedUser = userService.findById(userId);
+        if(relatedUser == null){
+            return null;
+        }
+        return ticketRepository.findByUser(relatedUser, PageRequest.of(page, size));
     }
     
 }

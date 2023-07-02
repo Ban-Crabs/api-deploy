@@ -16,5 +16,5 @@ public interface TicketService {
     Page<Ticket> findAll(int page, int size);
     Ticket findById(UUID id);
     Page<Ticket> findByTierId(UUID tierId, int page, int size);
-    Ticket findByUserId(UUID userId);
+    Page<Ticket> findByUser(String userId, int page, int size);
 }
