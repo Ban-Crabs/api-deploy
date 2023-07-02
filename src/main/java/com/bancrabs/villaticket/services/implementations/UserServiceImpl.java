@@ -117,11 +117,14 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public Boolean update(SaveUserDTO data, String id) throws Exception {
+    public Boolean update(SaveUserDTO data, String id, String oldPassword) throws Exception {
         try{
             User toUpdate = userRepository.findByUsernameOrEmail(id, id);
             if(toUpdate == null){
                 throw new Exception("User not found");
+            }
+            if(toUpdate.getPassword() != null && !passwordEncoder.matches(oldPassword, toUpdate.getPassword())){ 
+                throw new Exception("Wrong password");
             }
             else{
                 if(!verifyIdentity(id)) throw new Exception("Unauthorized");

@@ -160,6 +160,9 @@ public class UserController {
             if(check == null){
                 return new ResponseEntity<>("Not found", HttpStatus.NOT_FOUND);
             }
+            if (!userService.verifyIdentity(id)){
+                return new ResponseEntity<>("Unauthorized", HttpStatus.UNAUTHORIZED);
+            }
             check.setUsername(data.getUsername());
             check.setEmail(data.getEmail());
             if(userService.update(check)){
@@ -182,13 +185,17 @@ public class UserController {
 
     @PostMapping("/{id}/password")
     @PreAuthorize("hasAuthority('user')")
-    public ResponseEntity<?> updatePassword(@PathVariable("id") String id, @ModelAttribute @Valid SaveUserDTO data, BindingResult result){
+    public ResponseEntity<?> updatePassword(@PathVariable("id") String id, @ModelAttribute @Valid SaveUserDTO data, @ModelAttribute String oldPassword, BindingResult result){
         try{
             if(result.hasErrors()){
                 return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
             }
 
-            if(userService.update(data, id)){
+            if(!userService.verifyIdentity(id)){
+                return new ResponseEntity<>("Unauthorized", HttpStatus.UNAUTHORIZED);
+            }
+
+            if(userService.update(data, id, oldPassword)){
                 return new ResponseEntity<>("Updated", HttpStatus.OK);
             }
             else{
