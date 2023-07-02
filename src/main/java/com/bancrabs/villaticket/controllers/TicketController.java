@@ -351,4 +351,26 @@ public class TicketController {
             }
         }
     }
+    
+    @GetMapping("/user/{id}")
+    @PreAuthorize("hasAuthority('user')")
+    public ResponseEntity<?> getByUser(@PathVariable("id") String id, @RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "amt", defaultValue = "10") int size){
+        try{
+            List<Ticket> rawTickets = ticketService.findByUser(id, page, size).getContent();
+            List<TicketResponseDTO> tickets = new ArrayList<>();
+            rawTickets.forEach(ticket->{
+                tickets.add(new TicketResponseDTO(ticket.getId(), ticket.getTier().getId(), null, ticket.getResult()));
+            });
+            return new ResponseEntity<>(tickets, HttpStatus.OK);
+        }
+        catch(Exception e){
+            System.out.println(e);
+            switch(e.getMessage()){
+                case "User not found":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+                default:
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
 }
