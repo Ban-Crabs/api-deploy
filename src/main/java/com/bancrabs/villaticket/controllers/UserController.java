@@ -149,9 +149,40 @@ public class UserController {
         }
     }
 
-    @PostMapping("/{id}")
+    @PostMapping("/{id}/details")
     @PreAuthorize("hasAuthority('user')")
-    public ResponseEntity<?> updateUser(@PathVariable("id") String id, @ModelAttribute @Valid SaveUserDTO data, BindingResult result){
+    public ResponseEntity<?> updateUser(@PathVariable("id") String id, @ModelAttribute @Valid RegisterUserDTO data, BindingResult result){
+        try{
+            if(result.hasErrors()){
+                return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
+            }
+            User check = userService.findById(id);
+            if(check == null){
+                return new ResponseEntity<>("Not found", HttpStatus.NOT_FOUND);
+            }
+            check.setUsername(data.getUsername());
+            check.setEmail(data.getEmail());
+            if(userService.update(check)){
+                return new ResponseEntity<>("Updated", HttpStatus.OK);
+            }
+            else{
+                return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        catch(Exception e){
+            System.out.println(e);
+            switch(e.getMessage()){
+                case "User not found":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.NOT_FOUND);
+                default:
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+
+    @PostMapping("/{id}/password")
+    @PreAuthorize("hasAuthority('user')")
+    public ResponseEntity<?> updatePassword(@PathVariable("id") String id, @ModelAttribute @Valid SaveUserDTO data, BindingResult result){
         try{
             if(result.hasErrors()){
                 return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
@@ -173,7 +204,7 @@ public class UserController {
                     return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
-    }
+    }    
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('admin')")
