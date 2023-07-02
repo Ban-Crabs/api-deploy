@@ -29,10 +29,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.servlet.view.RedirectView;
-
 import com.bancrabs.villaticket.models.dtos.LoginDTO;
 import com.bancrabs.villaticket.models.dtos.response.PageResponseDTO;
+import com.bancrabs.villaticket.models.dtos.response.QRResponseDTO;
 import com.bancrabs.villaticket.models.dtos.response.TokenDTO;
 import com.bancrabs.villaticket.models.dtos.response.UserResponseDTO;
 import com.bancrabs.villaticket.models.dtos.save.RecordAttendanceDTO;
@@ -108,9 +107,9 @@ public class UserController {
                 return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
             }
 
-            if(userService.register(data)){
-                
-                return new ResponseEntity<>("Created", HttpStatus.CREATED);
+            String code = userService.register(data);
+            if(!code.isEmpty()){
+                return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
             }
             else{
                 return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -325,7 +324,7 @@ public class UserController {
     }
 
     @GetMapping("/loginSuccess")
-    public RedirectView getLoginInfo(Model model, OAuth2AuthenticationToken authentication){
+    public ResponseEntity<?> getLoginInfo(Model model, OAuth2AuthenticationToken authentication){
         OAuth2AuthorizedClient client = authorizedClientService
             .loadAuthorizedClient(authentication.getAuthorizedClientRegistrationId(), authentication.getName());
 
@@ -344,13 +343,14 @@ public class UserController {
             String name = (String) userAttributes.get("name");
             String email = (String) userAttributes.get("email");
             try{
-                userService.register(new RegisterUserDTO(name, email));
+                String code = userService.register(new RegisterUserDTO(name, email));
+                return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
             }
             catch(Exception e){
                 System.out.println(e.getMessage());
             }
         }
-        return new RedirectView("/");
+        return new ResponseEntity<>("Logged in", HttpStatus.OK);
     }
 
     @PostMapping("/logout")
@@ -423,8 +423,9 @@ public class UserController {
                     return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
                 }
     
-                if(userService.register(data)){
-                    return new ResponseEntity<>("Created", HttpStatus.CREATED);
+                String code = userService.register(data);
+                if(!code.isEmpty()){
+                    return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
                 }
                 else{
                     return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);

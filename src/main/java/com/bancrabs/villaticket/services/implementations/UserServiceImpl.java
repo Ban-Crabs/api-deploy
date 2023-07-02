@@ -45,12 +45,13 @@ public class UserServiceImpl implements UserService{
 
     @Override
     @Transactional(rollbackOn = Exception.class)
-    public Boolean register(RegisterUserDTO data) throws Exception {
+    public String register(RegisterUserDTO data) throws Exception {
         try{
             User check = userRepository.findByUsernameOrEmail(data.getUsername(), data.getEmail());
             if(check == null){
-                userRepository.save(new User(data.getUsername(), data.getEmail(), null));
-                return true;
+                check = userRepository.save(new User(data.getUsername(), data.getEmail(), null));
+                QR qr = qrService.save((passwordEncoder.encode(check.getId().toString() + Long.toString(System.currentTimeMillis()))));
+                return qr.getCode();
             }
             else{
                 throw new Exception("User already exists");
@@ -249,12 +250,13 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public Boolean register(SaveUserDTO data) throws Exception {
+    public String register(SaveUserDTO data) throws Exception {
         try{
             User check = userRepository.findByUsernameOrEmail(data.getUsername(), data.getEmail());
             if(check == null){
-                userRepository.save(new User(data.getUsername(), data.getEmail(), passwordEncoder.encode(data.getPassword())));
-                return true;
+                check = userRepository.save(new User(data.getUsername(), data.getEmail(), passwordEncoder.encode(data.getPassword())));
+                QR qr = qrService.save((passwordEncoder.encode(check.getId().toString() + Long.toString(System.currentTimeMillis()))));
+                return qr.getCode();
             }
             else{
                 throw new Exception("User already exists");
