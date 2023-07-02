@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 import com.bancrabs.villaticket.models.dtos.LoginDTO;
+import com.bancrabs.villaticket.models.dtos.response.AttendanceResponseDTO;
 import com.bancrabs.villaticket.models.dtos.response.PageResponseDTO;
 import com.bancrabs.villaticket.models.dtos.response.QRResponseDTO;
 import com.bancrabs.villaticket.models.dtos.response.TokenDTO;
@@ -300,7 +301,11 @@ public class UserController {
             }
 
             Page<Attendance> rawAttendance = attendanceService.findByUserId(user.getId(), page, size);
-            PageResponseDTO<Attendance> response = new PageResponseDTO<>(rawAttendance.getContent(), rawAttendance.getTotalPages(), rawAttendance.getTotalElements());
+            List<AttendanceResponseDTO> attendance = new ArrayList<>();
+            rawAttendance.getContent().forEach(at -> {
+                attendance.add(new AttendanceResponseDTO(at.getId(), new UserResponseDTO(at.getUser().getUsername(), at.getUser().getEmail()), at.getEvent(), at.getTimestamp()));
+            });
+            PageResponseDTO<AttendanceResponseDTO> response = new PageResponseDTO<>(attendance, rawAttendance.getTotalPages(), rawAttendance.getTotalElements());
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
         catch(Exception e){
@@ -314,7 +319,11 @@ public class UserController {
     public ResponseEntity<?> getAllAttendance(@RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "amt", defaultValue = "10") int size){
         try{
             Page<Attendance> rawAttendance = attendanceService.findAll(page, size);
-            PageResponseDTO<Attendance> response = new PageResponseDTO<>(rawAttendance.getContent(), rawAttendance.getTotalPages(), rawAttendance.getTotalElements());
+            List<AttendanceResponseDTO> attendance = new ArrayList<>();
+            rawAttendance.getContent().forEach(at -> {
+                attendance.add(new AttendanceResponseDTO(at.getId(), new UserResponseDTO(at.getUser().getUsername(), at.getUser().getEmail()), at.getEvent(), at.getTimestamp()));
+            });
+            PageResponseDTO<AttendanceResponseDTO> response = new PageResponseDTO<>(attendance, rawAttendance.getTotalPages(), rawAttendance.getTotalElements());
             return new ResponseEntity<>(response, HttpStatus.OK);
         }
         catch(Exception e){
