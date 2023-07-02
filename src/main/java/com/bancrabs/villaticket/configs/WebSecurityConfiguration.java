@@ -44,7 +44,7 @@ public class WebSecurityConfiguration {
 
 		// Route filter
 		http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("api/user/register", "api/user/login").permitAll()
+                .requestMatchers("api/user/register", "api/user/login", "api/user/traditionalRegister").permitAll()
                 .anyRequest().authenticated()).oauth2Login(oauth -> 
 				oauth.loginPage("/api/user/login/oauth2/code/google")
 						.tokenEndpoint().accessTokenResponseClient(accessTokenResponseClient())
