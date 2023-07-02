@@ -43,6 +43,7 @@ public class VillaticketApplication {
 				userPrivilegeService.save(new SavePrivilegeDTO("employee", user.getId()));
 				userPrivilegeService.save(new SavePrivilegeDTO("user", user.getId()));
 				userPrivilegeService.save(new SavePrivilegeDTO("analyst", user.getId()));
+				userPrivilegeService.save(new SavePrivilegeDTO("sysadmin", user.getId()));
 			}
 			System.out.println("Initialized");
 		}
