@@ -414,31 +414,35 @@ public class UserController {
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-}
-
-@PostMapping("/traditionalRegister")
-public ResponseEntity<?> tradRegister(@ModelAttribute @Valid SaveUserDTO data, BindingResult result){
-    try{
-        if(enableTraditionalRegister){
-            if(result.hasErrors()){
-                return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
-            }
-
-            if(userService.register(data)){
-                return new ResponseEntity<>("Created", HttpStatus.CREATED);
+    
+    @PostMapping("/traditionalRegister")
+    public ResponseEntity<?> tradRegister(@ModelAttribute @Valid SaveUserDTO data, BindingResult result){
+        try{
+            if(enableTraditionalRegister){
+                if(result.hasErrors()){
+                    return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
+                }
+    
+                if(userService.register(data)){
+                    return new ResponseEntity<>("Created", HttpStatus.CREATED);
+                }
+                else{
+                    return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
             }
             else{
-                return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>("Traditional register is disabled", HttpStatus.FORBIDDEN);
+            }
+        }
+        catch(Exception e){
+            System.out.println(e);
+            switch(e.getMessage()){
+                case "User already exists":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+                default:
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
             }
         }
     }
-    catch(Exception e){
-        System.out.println(e);
-        switch(e.getMessage()){
-            case "User already exists":
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
-            default:
-                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 }
+
