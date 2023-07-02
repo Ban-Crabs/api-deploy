@@ -247,4 +247,21 @@ public class UserServiceImpl implements UserService{
             throw e;
         }
     }
+
+    @Override
+    public Boolean register(SaveUserDTO data) throws Exception {
+        try{
+            User check = userRepository.findByUsernameOrEmail(data.getUsername(), data.getEmail());
+            if(check == null){
+                userRepository.save(new User(data.getUsername(), data.getEmail(), passwordEncoder.encode(data.getPassword())));
+                return true;
+            }
+            else{
+                throw new Exception("User already exists");
+            }
+        }
+        catch(Exception e){
+            throw e;
+        }
+    }
 }

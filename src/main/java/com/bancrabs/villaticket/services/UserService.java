@@ -12,6 +12,7 @@ import com.bancrabs.villaticket.models.entities.User;
 
 public interface UserService {
     Boolean register(RegisterUserDTO data) throws Exception;
+    Boolean register(SaveUserDTO data) throws Exception;
     Boolean login(LoginDTO data) throws Exception;
     Boolean logoutActive() throws Exception;
     Boolean update(SaveUserDTO data, String id) throws Exception;

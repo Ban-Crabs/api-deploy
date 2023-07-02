@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -51,6 +52,9 @@ import jakarta.validation.Valid;
 @CrossOrigin("*")
 public class UserController {
     
+    @Value("${config.enable-traditional-register}")
+    private Boolean enableTraditionalRegister;
+
     @Autowired
     private UserService userService;
 
@@ -195,7 +199,7 @@ public class UserController {
         try{
             Page<User> rawUsers = userService.findAll(page, size);
             List<UserResponseDTO> users = new ArrayList<>();
-            rawUsers.forEach(us->{
+            rawUsers.forEach(us -> {
                 users.add(new UserResponseDTO(us.getUsername(), us.getEmail()));
             });
             PageResponseDTO<UserResponseDTO> response = new PageResponseDTO<>(users, rawUsers.getTotalPages(), rawUsers.getTotalElements());
@@ -408,6 +412,33 @@ public class UserController {
         catch(Exception e){
             System.out.println(e);
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+}
+
+@PostMapping("/traditionalRegister")
+public ResponseEntity<?> tradRegister(@ModelAttribute @Valid SaveUserDTO data, BindingResult result){
+    try{
+        if(enableTraditionalRegister){
+            if(result.hasErrors()){
+                return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
+            }
+
+            if(userService.register(data)){
+                return new ResponseEntity<>("Created", HttpStatus.CREATED);
+            }
+            else{
+                return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+    catch(Exception e){
+        System.out.println(e);
+        switch(e.getMessage()){
+            case "User already exists":
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+            default:
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
