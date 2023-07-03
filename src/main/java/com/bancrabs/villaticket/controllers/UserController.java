@@ -279,8 +279,8 @@ public class UserController {
     }
 
     @GetMapping("/{id}/privilege")
-    @PreAuthorize("hasAuthority('user')")
-    public ResponseEntity<?> getPrivileges(@PathVariable("id") String id){
+    @PreAuthorize("hasAuthority('admin')")
+    public ResponseEntity<?> getUserPrivileges(@PathVariable("id") String id){
         try{
             return new ResponseEntity<>(userPrivilegeService.findByUserId(id), HttpStatus.OK);
         }
@@ -291,10 +291,10 @@ public class UserController {
     }
 
     @GetMapping("/privilege")
-    @PreAuthorize("hasAuthority('admin')")
-    public ResponseEntity<?> getAllPrivileges(){
+    @PreAuthorize("hasAuthority('user')")
+    public ResponseEntity<?> getPrivileges(){
         try{
-            return new ResponseEntity<>(userPrivilegeService.findAll(), HttpStatus.OK);
+            return new ResponseEntity<>(userPrivilegeService.findAuthenticated(), HttpStatus.OK);
         }
         catch(Exception e){
             System.out.println(e);

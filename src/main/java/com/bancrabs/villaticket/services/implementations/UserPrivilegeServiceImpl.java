@@ -78,10 +78,6 @@ public class UserPrivilegeServiceImpl implements UserPrivilegeService{
         if(user == null){
             return null;
         }
-        User check = userService.findUserAuthenticated();
-        if(check != null && !check.getId().equals(user.getId())){
-            return null;
-        }
         List<UserPrivilege> privileges = userPrivilegeRepository.findByUserId(user.getId());
         if(privileges != null){
             List<UserPrivilegeResponseDTO> response = new ArrayList<>();
@@ -103,6 +99,25 @@ public class UserPrivilegeServiceImpl implements UserPrivilegeService{
     @Override
     public UserPrivilege findById(UUID id) {
         return userPrivilegeRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public List<UserPrivilegeResponseDTO> findAuthenticated() {
+        User user = userService.findUserAuthenticated();
+        if(user == null){
+            return null;
+        }
+        List<UserPrivilege> privileges = userPrivilegeRepository.findByUserId(user.getId());
+        if(privileges != null){
+            List<UserPrivilegeResponseDTO> response = new ArrayList<>();
+            privileges.forEach(privilege -> {
+                response.add(new UserPrivilegeResponseDTO(privilege.getName(), user.getUsername()));
+            });
+            return response;
+        }
+        else{
+            return null;
+        }
     }
     
 }

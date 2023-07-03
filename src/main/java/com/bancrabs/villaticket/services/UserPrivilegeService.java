@@ -13,6 +13,7 @@ public interface UserPrivilegeService {
 
     List<UserPrivilege> findAll();
     List<UserPrivilegeResponseDTO> findByUserId(String id);
+    List<UserPrivilegeResponseDTO> findAuthenticated();
     List<UserPrivilege> findByName(String name);
     UserPrivilege findById(UUID id);
 }
