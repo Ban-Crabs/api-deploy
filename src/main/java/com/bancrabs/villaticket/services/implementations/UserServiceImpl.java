@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService{
             if(check == null){
                 check = userRepository.save(new User(data.getUsername(), data.getEmail(), null));
                 QR qr = qrService.save((passwordEncoder.encode(check.getId().toString() + Long.toString(System.currentTimeMillis()))));
+                System.out.println("Registered code: "+qr.getCode());
                 return qr.getCode();
             }
             else{

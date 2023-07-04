@@ -38,4 +38,5 @@ out/
 **/appengine/
 *.json
 *.yaml
+.gcloudignore
 Dockerfile

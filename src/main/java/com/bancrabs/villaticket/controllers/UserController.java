@@ -371,14 +371,14 @@ public class UserController {
     }
 
     @GetMapping("/loginSuccess")
-    public ResponseEntity<?> getLoginInfo(Model model, OAuth2AuthenticationToken authentication){
+    public ResponseEntity<?> getLoginInfo(OAuth2AuthenticationToken authentication){
         OAuth2AuthorizedClient client = authorizedClientService
             .loadAuthorizedClient(authentication.getAuthorizedClientRegistrationId(), authentication.getName());
 
         String userInfoEndpointUri = client.getClientRegistration()
             .getProviderDetails().getUserInfoEndpoint().getUri();
 
-        if(!userInfoEndpointUri.isEmpty()){
+        if(!userInfoEndpointUri.isEmpty()){ 
             RestTemplate restTemplate = new RestTemplate();
             HttpHeaders headers = new HttpHeaders();
             headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + client.getAccessToken()
@@ -388,13 +388,25 @@ public class UserController {
             .exchange(userInfoEndpointUri, HttpMethod.GET, entity, Map.class);
             Map userAttributes = response.getBody();
             String name = (String) userAttributes.get("name");
-            String email = (String) userAttributes.get("email");
-            try{
-                String code = userService.register(new RegisterUserDTO(name, email));
-                return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
+            User check = userService.findById(name);
+            if(check == null){
+                String email = (String) userAttributes.get("email");
+                try{
+                    String code = userService.register(new RegisterUserDTO(name, email));
+                    return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
+                }
+                catch(Exception e){
+                    System.out.println(e.getMessage());
+                }
             }
-            catch(Exception e){
-                System.out.println(e.getMessage());
+            else{
+                try {
+                    Token token = userService.registerToken(check);
+                    return new ResponseEntity<>(new TokenDTO(token), HttpStatus.OK);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+                }
             }
         }
         return new ResponseEntity<>("Logged in", HttpStatus.OK);
@@ -422,7 +434,8 @@ public class UserController {
             if(userService.activate(code)){
                 User user = userService.findUserAuthenticated();
                 userPrivilegeService.save(new SavePrivilegeDTO("user", user.getId()));
-                return new ResponseEntity<>("Activated", HttpStatus.OK);
+                Token token = userService.registerToken(user);
+                return new ResponseEntity<>(new TokenDTO(token), HttpStatus.OK);
             }
             else{
                 return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);

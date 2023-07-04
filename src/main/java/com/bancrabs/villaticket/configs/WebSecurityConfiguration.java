@@ -7,20 +7,31 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.endpoint.DefaultAuthorizationCodeTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AccessTokenResponseClient;
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequest;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import static org.springframework.security.config.Customizer.withDefaults;
 
-import com.bancrabs.villaticket.models.entities.User;
-import com.bancrabs.villaticket.services.UserService;
-import com.bancrabs.villaticket.utils.JWTTokenFilter;
+import java.io.IOException;
+import java.io.PrintWriter;
 
+import com.bancrabs.villaticket.models.dtos.response.QRResponseDTO;
+import com.bancrabs.villaticket.models.dtos.save.RegisterUserDTO;
+import com.bancrabs.villaticket.models.entities.OauthUser;
+import com.bancrabs.villaticket.models.entities.QR;
+import com.bancrabs.villaticket.models.entities.User;
+import com.bancrabs.villaticket.services.QRService;
+import com.bancrabs.villaticket.services.UserService;
+import com.bancrabs.villaticket.services.implementations.OAuthUserService;
+import com.bancrabs.villaticket.utils.JWTTokenFilter;
+import com.bancrabs.villaticket.utils.JWTTools;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 @Configuration
@@ -31,6 +42,15 @@ public class WebSecurityConfiguration {
 	private PasswordEncoder passwordEncoder;
 
 	@Autowired
+	private JWTTools jwtTools;
+
+	@Autowired
+	private QRService qrService;
+
+	@Autowired
+	private OAuthUserService oauthUserService;
+
+	@Autowired
 	private UserService userService;
 
 	@Autowired
@@ -39,20 +59,70 @@ public class WebSecurityConfiguration {
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		// Http login and cors disabled
-		http.httpBasic(withDefaults()).csrf(csrf -> csrf.disable()).cors(cors->cors.disable());
+		http.httpBasic(withDefaults()).csrf(csrf -> csrf.disable()).cors(cors->cors.disable()).cors(cors -> cors.disable());
 		http.cors(withDefaults());
 
 		// Route filter
 		http.authorizeHttpRequests(auth -> auth
-                .requestMatchers("api/user/register", "api/user/login", "api/user/traditionalRegister").permitAll()
+                .requestMatchers("api/user/register", "api/user/login", "api/user/traditionalRegister", "/api/user/loginSuccess", "/api/user/activate", "/oauth/**").permitAll()
                 .anyRequest().authenticated()).oauth2Login(oauth -> 
-				oauth.loginPage("/api/user/login/oauth2/code/google")
-						.tokenEndpoint().accessTokenResponseClient(accessTokenResponseClient())
+				oauth.tokenEndpoint().accessTokenResponseClient(accessTokenResponseClient())
 						.and().defaultSuccessUrl("/api/user/loginSuccess")
-						.failureUrl("/loginFailure"));
+						.userInfoEndpoint().userService(oauthUserService).and()
+						.successHandler(new AuthenticationSuccessHandler(){
 
-		// Statelessness
-		http.sessionManagement(management -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+							@Override
+							public void onAuthenticationSuccess(HttpServletRequest request,
+									HttpServletResponse response,
+									org.springframework.security.core.Authentication authentication)
+									throws IOException, ServletException {
+										OauthUser user = (OauthUser) authentication.getPrincipal();
+										User check = userService.findById(user.getEmail());
+										if(check == null){
+											try {
+												userService.register(new RegisterUserDTO(user.getName(), user.getEmail()));
+												check = userService.findById(user.getEmail());
+												QR qr = qrService.save((passwordEncoder.encode(check.getId().toString() + Long.toString(System.currentTimeMillis()))));
+                								QRResponseDTO qrResponseDTO = new QRResponseDTO(qr.getCode());
+												PrintWriter	out = response.getWriter();
+												response.setContentType("application/json");
+												response.setCharacterEncoding("UTF-8");
+												out.print(qrResponseDTO);
+												out.flush();
+											} catch (Exception e) {
+												e.printStackTrace();
+											}
+										}
+										else{
+											try {
+												if(!check.getActive()){
+													QR qr = qrService.save((passwordEncoder.encode(check.getId().toString() + Long.toString(System.currentTimeMillis()))));
+													QRResponseDTO qrResponseDTO = new QRResponseDTO(qr.getCode());
+													PrintWriter	out = response.getWriter();
+													response.setContentType("application/json");
+													response.setCharacterEncoding("UTF-8");
+													out.print(qrResponseDTO);
+													out.flush();
+												}
+												else{
+													String token = jwtTools.generateToken(check);
+													PrintWriter	out = response.getWriter();
+													response.setContentType("application/json");
+													response.setCharacterEncoding("UTF-8");
+													out.print(token);
+													out.flush();
+												}
+											} catch (Exception e) {
+												e.printStackTrace();
+											}
+										}
+										response.setStatus(200);
+										response.sendRedirect("/");
+							}
+						})
+					);
+
+		
 
 		// UnAunthorized handler
 		http.exceptionHandling(handling -> handling.authenticationEntryPoint((req, res, ex) -> {
