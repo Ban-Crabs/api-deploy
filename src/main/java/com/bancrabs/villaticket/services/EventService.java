@@ -14,6 +14,7 @@ public interface EventService {
     Boolean toggleVisibility(UUID eventId) throws Exception;
 
     Event findById(UUID id);
+    Page<Event> findByTitle(String title, int page, int size);
     Page<Event> findAll(int page, int size);
     Page<Event> findAllUpcomingEvents(int page, int size);
     Page<Event> findAllPastEvents(int page, int size);

@@ -270,4 +270,17 @@ public class UserServiceImpl implements UserService{
             throw e;
         }
     }
+
+    @Override
+    public String generateActivationCode(User user) throws Exception {
+        try{
+            QR qr = qrService.save((passwordEncoder.encode(user.getId().toString() + Long.toString(System.currentTimeMillis()))));
+            return qr.getCode();
+        }
+        catch(Exception e){
+            throw e;
+        }
+    }
+
+    
 }

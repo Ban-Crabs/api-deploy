@@ -71,11 +71,18 @@ public class EventController {
 
     @GetMapping("/")
     @PreAuthorize("hasAuthority('admin')")
-    public ResponseEntity<?> getAll(@RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "amt", defaultValue = "10") int size){
+    public ResponseEntity<?> getAll(@RequestParam(name="query", required = false) String search, @RequestParam(name = "page", defaultValue = "0") int page, @RequestParam(name = "amt", defaultValue = "10") int size){
         try{
-            Page<Event> rawEvents = eventService.findAll(page, size);
-            PageResponseDTO<Event> response = new PageResponseDTO<>(rawEvents.getContent(), rawEvents.getTotalPages(), rawEvents.getTotalElements());
-            return new ResponseEntity<>(response, HttpStatus.OK);
+            if(search == null){
+                Page<Event> rawEvents = eventService.findAll(page, size);
+                PageResponseDTO<Event> response = new PageResponseDTO<>(rawEvents.getContent(), rawEvents.getTotalPages(), rawEvents.getTotalElements());
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
+            else{
+                Page<Event> rawEvents = eventService.findByTitle(search, page, size);
+                PageResponseDTO<Event> response = new PageResponseDTO<>(rawEvents.getContent(), rawEvents.getTotalPages(), rawEvents.getTotalElements());
+                return new ResponseEntity<>(response, HttpStatus.OK);
+            }
         }
         catch(Exception e){
             return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

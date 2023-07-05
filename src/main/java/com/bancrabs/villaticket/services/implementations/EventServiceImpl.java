@@ -195,5 +195,10 @@ public class EventServiceImpl implements EventService {
             return false;
         }
     }
+
+    @Override
+    public Page<Event> findByTitle(String title, int page, int size) {
+        return eventRepository.findByTitleContainingIgnoreCase(title, PageRequest.of(page, size));
+    }
     
 }

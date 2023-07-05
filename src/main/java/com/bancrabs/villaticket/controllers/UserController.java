@@ -2,22 +2,14 @@ package com.bancrabs.villaticket.controllers;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
-import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,7 +20,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 import com.bancrabs.villaticket.models.dtos.LoginDTO;
 import com.bancrabs.villaticket.models.dtos.response.AttendanceResponseDTO;
 import com.bancrabs.villaticket.models.dtos.response.PageResponseDTO;
@@ -63,9 +54,6 @@ public class UserController {
 
     @Autowired
     private AttendanceService attendanceService;
-
-    @Autowired
-    private OAuth2AuthorizedClientService authorizedClientService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@ModelAttribute @Valid LoginDTO data, BindingResult result) {
@@ -370,48 +358,6 @@ public class UserController {
         }
     }
 
-    @GetMapping("/loginSuccess")
-    public ResponseEntity<?> getLoginInfo(OAuth2AuthenticationToken authentication){
-        OAuth2AuthorizedClient client = authorizedClientService
-            .loadAuthorizedClient(authentication.getAuthorizedClientRegistrationId(), authentication.getName());
-
-        String userInfoEndpointUri = client.getClientRegistration()
-            .getProviderDetails().getUserInfoEndpoint().getUri();
-
-        if(!userInfoEndpointUri.isEmpty()){ 
-            RestTemplate restTemplate = new RestTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.add(HttpHeaders.AUTHORIZATION, "Bearer " + client.getAccessToken()
-            .getTokenValue());
-            HttpEntity<String> entity = new HttpEntity<>("", headers);
-            ResponseEntity <Map>response = restTemplate
-            .exchange(userInfoEndpointUri, HttpMethod.GET, entity, Map.class);
-            Map userAttributes = response.getBody();
-            String name = (String) userAttributes.get("name");
-            User check = userService.findById(name);
-            if(check == null){
-                String email = (String) userAttributes.get("email");
-                try{
-                    String code = userService.register(new RegisterUserDTO(name, email));
-                    return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
-                }
-                catch(Exception e){
-                    System.out.println(e.getMessage());
-                }
-            }
-            else{
-                try {
-                    Token token = userService.registerToken(check);
-                    return new ResponseEntity<>(new TokenDTO(token), HttpStatus.OK);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-            }
-        }
-        return new ResponseEntity<>("Logged in", HttpStatus.OK);
-    }
-
     @PostMapping("/logout")
     public ResponseEntity<?> logout(){
         try{
@@ -493,6 +439,46 @@ public class UserController {
             }
             else{
                 return new ResponseEntity<>("Traditional register is disabled", HttpStatus.FORBIDDEN);
+            }
+        }
+        catch(Exception e){
+            System.out.println(e);
+            switch(e.getMessage()){
+                case "User already exists":
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.CONFLICT);
+                default:
+                    return new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<?> googleLogin(@ModelAttribute @Valid RegisterUserDTO data, BindingResult result){
+        try{
+            if(result.hasErrors()){
+                return new ResponseEntity<>(result.getAllErrors(), HttpStatus.BAD_REQUEST);
+            }
+
+            User check = userService.findById(data.getEmail());
+            
+            if(check == null){
+                String code = userService.register(data);
+                if(!code.isEmpty()){
+                    return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
+                }
+                else{
+                    return new ResponseEntity<>("Error", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+            else{
+                if(!check.getActive()){
+                    String code = userService.generateActivationCode(check);
+                    return new ResponseEntity<>(new QRResponseDTO(code), HttpStatus.CREATED);
+                }
+                else{
+                    Token token = userService.registerToken(check);
+                    return new ResponseEntity<>(new TokenDTO(token), HttpStatus.OK);
+                }
             }
         }
         catch(Exception e){
