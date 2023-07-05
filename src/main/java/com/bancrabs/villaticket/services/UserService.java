@@ -22,7 +22,7 @@ public interface UserService {
     User findById(String id);
     Page<User> findAll(int page, int size);
     Boolean verifyIdentity(String id) throws Exception;
-    Boolean activate(String code) throws Exception;
+    Boolean activate(String code, String username) throws Exception;
 
     Token registerToken(User user) throws Exception;
 	Boolean isTokenValid(User user, String token);

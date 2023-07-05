@@ -69,17 +69,17 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-      return this.active;
+      return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-      return this.active;
+      return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-      return this.active;
+      return true;
     }
 
     @Override
@@ -91,5 +91,6 @@ public class User implements UserDetails {
         this.username = unStr;
         this.password = pwStr;
         this.email = emStr;
+        this.active = false;
     }
 }

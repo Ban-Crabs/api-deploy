@@ -375,10 +375,10 @@ public class UserController {
     }
 
     @PostMapping("/activate")
-    public ResponseEntity<?> activate(@ModelAttribute(name = "code") String code){
+    public ResponseEntity<?> activate(@ModelAttribute(name = "code") String code, @ModelAttribute(name = "username") String username){
         try{
-            if(userService.activate(code)){
-                User user = userService.findUserAuthenticated();
+            if(userService.activate(code, username)){
+                User user = userService.findById(username);
                 userPrivilegeService.save(new SavePrivilegeDTO("user", user.getId()));
                 Token token = userService.registerToken(user);
                 return new ResponseEntity<>(new TokenDTO(token), HttpStatus.OK);

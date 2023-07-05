@@ -50,6 +50,7 @@ public class UserServiceImpl implements UserService{
             User check = userRepository.findByUsernameOrEmail(data.getUsername(), data.getEmail());
             if(check == null){
                 check = userRepository.save(new User(data.getUsername(), data.getEmail(), null));
+                System.out.println(check);
                 QR qr = qrService.save((passwordEncoder.encode(check.getId().toString() + Long.toString(System.currentTimeMillis()))));
                 System.out.println("Registered code: "+qr.getCode());
                 return qr.getCode();
@@ -103,7 +104,7 @@ public class UserServiceImpl implements UserService{
                 throw new Exception("User not found");
             }
             else{
-                if(check.getPassword() == null) throw new Exception("Unauthorized");
+                if(check.getPassword() == null || !check.getActive()) throw new Exception("Unauthorized");
                 if(passwordEncoder.matches(data.getPassword(), check.getPassword())){
                     return true;
                 }
@@ -226,12 +227,12 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public Boolean activate(String code) throws Exception {
+    public Boolean activate(String code, String username) throws Exception {
         try{
             QR check = qrService.findByCode(code);
             if(check == null) throw new Exception("QR not found");
             if(System.currentTimeMillis() - check.getCreationTime().getTime() > 86400000 || System.currentTimeMillis() - check.getCreationTime().getTime() <= 0 ) throw new Exception("QR expired");
-            User user = findUserAuthenticated();
+            User user = findById(username);
             user.setActive(true);
             userRepository.save(user);
             return true;
@@ -259,6 +260,7 @@ public class UserServiceImpl implements UserService{
             User check = userRepository.findByUsernameOrEmail(data.getUsername(), data.getEmail());
             if(check == null){
                 check = userRepository.save(new User(data.getUsername(), data.getEmail(), passwordEncoder.encode(data.getPassword())));
+                System.out.println(check);
                 QR qr = qrService.save((passwordEncoder.encode(check.getId().toString() + Long.toString(System.currentTimeMillis()))));
                 return qr.getCode();
             }
